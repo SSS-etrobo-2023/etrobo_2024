@@ -18,7 +18,7 @@ git commit -m "<コミットログ>"
 
 5.プッシュする
 git push origin main
-
+PASSWORD: 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
 
 # git 関係の設定(やりたい人のみ)
 ・エディタを nano から vim に変更する
