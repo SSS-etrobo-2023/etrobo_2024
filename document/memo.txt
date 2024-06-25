@@ -7,18 +7,22 @@ git config --global user.email w-kuraya@sss-i.co.jp
 cd ~/
 cp ~/work/RasPike/sdk/workspace/<フォルダ>/* ~/etrobo_2024/workspace/<フォルダ>
 
-3.push したいファイルを登録する
+3.変更を取得する
+git pull
+
+4.push したいファイルを登録する
 git status
 git add <登録したいファイル>
 
-4.コミットログをつける
+5.コミットログをつける
 git commit
 or
 git commit -m "<コミットログ>"
 
-5.プッシュする
+6.プッシュする
 git push origin main
-PASSWORD: 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
+PASSWORD: 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
+
 
 # git 関係の設定(やりたい人のみ)
 ・エディタを nano から vim に変更する
