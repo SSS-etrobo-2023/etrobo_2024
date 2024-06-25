@@ -1,0 +1,51 @@
+# git push 手順
+1.git の config にユーザ名、メールアドレスを登録する
+git config --global user.name w-kuraya
+git config --global user.email w-kuraya@sss-i.co.jp
+
+2.開発環境から git 環境にファイルをコピーする
+cd ~/
+cp ~/work/RasPike/sdk/workspace/<フォルダ>/* ~/etrobo_2024/workspace/<フォルダ>
+
+3.push したいファイルを登録する
+git status
+git add <登録したいファイル>
+
+4.コミットログをつける
+git commit
+or
+git commit -m "<コミットログ>"
+
+5.プッシュする
+git push origin main
+
+
+# git 関係の設定(やりたい人のみ)
+・エディタを nano から vim に変更する
+sudo apt install vim
+git config --global core.editor vim
+
+
+# 個人用のワークフォルダを作成する
+・開発環境
+mkdir ~/work/RasPike/sdk/workspace/<フォルダ>
+
+・git 環境
+mkdir ~/etrobo_2024/workspace/<フォルダ>
+
+
+# vim 使用方法
+i ... 編集モードになる
+esc ... 編集モードを終える
+
+閲覧モード(デフォルト)で使用可能なコマンド
+:w ... 保存
+:q ... エディタを閉じる
+:wq ... 保存して閉じる
+gg ... 一番上の行に移動する
+shift+g ... 一番下の行に移動する
+h or ← ... 左に移動
+j or ↓ ... 下に移動
+k or ↑ ... 上に移動
+l or → ... 右に移動
+/<文字列> ... 文字列を検索する。n でさらに下に検索する。shift + n で上に検索する。
