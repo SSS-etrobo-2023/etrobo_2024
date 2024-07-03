@@ -6,7 +6,7 @@
 #include "extern.h"
 
 /* テストモード */
-#define MODE_TEST
+//#define MODE_TEST
 
 /* ファイルにログ出力するかどうか */
 //#define OUTLOG_FILE

@@ -15,10 +15,10 @@ static int t_pos = COURSE_TYPE;
 // @memo この値は適宜調整する
 static const int init_power = 70;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
-static const float T = 0.002;
-static const float Kp = 5.0;
-static const float Ki = 0.01;
-static const float Kd = 1.5;
+static const float T = 0.01;
+static const float Kp = 2.0;
+static const float Ki = 0.05;
+static const float Kd = 0.03;
 
 static int8_t isEnd = false;
 
@@ -60,7 +60,7 @@ int16_t steering_amount_calculation(void){
     int16_t  steering_amount;   /* ステアリング操舵量 */
 
     /* 目標輝度値の計算 */
-    target_brightness = (LIGHT_WHITE - LIGHT_BLACK) / 5;
+    target_brightness = (LIGHT_WHITE - LIGHT_BLACK) / 4;
 
     /* ステアリング操舵量を計算 */
     steering_amount = calculate_turn(target_brightness, t_pos);
@@ -107,7 +107,7 @@ int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
      * @memo: 青線をトレースできるよう、センサの値を 1/3 しておく。
      *        将来的に変更の可能性あり。
      */
-    sensor_reflect = ev3_color_sensor_get_reflect(color_sensor) / 3;
+    sensor_reflect = ev3_color_sensor_get_reflect(color_sensor);
     LOG_D_TEST("reflect: %d\n", target_reflect - sensor_reflect);
 
     curb = PID(target_reflect, sensor_reflect);
