@@ -1,6 +1,3 @@
-#ifndef __APP_H__
-#define __APP_H__
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,8 +9,8 @@ extern "C" {
 #define TRACER_PRIORITY  (TMIN_APP_TPRI + 2) /* ライントレースタスク */
 
 /* タスク周期の定義 */
-/* @memo:計算回数を多くするため、100msec から msec に変更した */
-#define LINE_TRACER_PERIOD  (5 * 1000) /* ライントレースタスク:10msec周期 */
+/* @memo:計算回数を多くするため、100msec から 10msec に変更した */
+#define LINE_TRACER_PERIOD  (10 * 1000) /* ライントレースタスク:10msec周期 */
 
 /* センサーポートの定義 */
 static const sensor_port_t
@@ -41,6 +38,4 @@ extern void tracer_task(intptr_t exinf);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
