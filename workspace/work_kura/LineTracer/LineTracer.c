@@ -16,9 +16,9 @@ static int t_pos = COURSE_TYPE;
 static const int init_power = 70;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
-static const float Kp = 2.0;
-static const float Ki = 0.05;
-static const float Kd = 0.03;
+static const float Kp = 1.5;
+static const float Ki = 0.1;
+static const float Kd = 0.02;
 
 static int8_t isEnd = false;
 
@@ -46,7 +46,7 @@ void tracer_task(intptr_t unused) {
         isEnd = true;
     }
 #else
-    test_main(1);
+    test_main(0);
 #endif
 
     /* タスク終了 */
@@ -60,7 +60,7 @@ int16_t steering_amount_calculation(void){
     int16_t  steering_amount;   /* ステアリング操舵量 */
 
     /* 目標輝度値の計算 */
-    target_brightness = (LIGHT_WHITE - LIGHT_BLACK) / 4;
+    target_brightness = (LIGHT_WHITE - LIGHT_BLACK) / 3;
 
     /* ステアリング操舵量を計算 */
     steering_amount = calculate_turn(target_brightness, t_pos);

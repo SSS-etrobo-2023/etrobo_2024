@@ -1,6 +1,8 @@
 #include "app.h"
 #include <stdio.h>
 
+//FILE *fp;
+
 /* メインタスク(起動時にのみ関数コールされる) */
 void main_task(intptr_t unused) {
 
@@ -17,8 +19,9 @@ void main_task(intptr_t unused) {
     
     printf("Start Line Trace!!\n");
 
-    ev3_motor_set_power(left_motor, 70);
-    ev3_motor_set_power(right_motor, 70);
+    ev3_motor_set_power(arm_motor, 0);
+    ev3_motor_set_power(left_motor, 0);
+    ev3_motor_set_power(right_motor, 0);
 
     /* ライントレースタスクの起動 */
     sta_cyc(LINE_TRACER_TASK_CYC);
