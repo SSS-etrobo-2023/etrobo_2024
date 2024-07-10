@@ -14,6 +14,7 @@ extern void motor_rotate(int power, int degree);
 extern void motor_move(int power, int cm);
 
 /* LineTracer_lib.c の extern 宣言 */
+extern void change_target_reflect(int color_code);
 extern int change_trace_pos(int trace_pos);
 extern void set_motor_power(int left_power, int right_power);
 extern void reset_motor_counts(void);

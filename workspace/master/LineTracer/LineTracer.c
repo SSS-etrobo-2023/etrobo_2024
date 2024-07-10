@@ -8,19 +8,23 @@
 #include "common.h"
 #include "extern.h"
 
+uint16_t target_ref = 0;
+
 /* トレース位置 */
 static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static const int init_power = 70;
+static int init_power = 70;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 static const float Kp = 1.5;
 static const float Ki = 0.1;
 static const float Kd = 0.02;
 
+static int8_t isBlue = false;
 static int8_t isEnd = false;
+static int8_t phase = PHASE_START;
 
 /* ライントレースタスク(10msec周期で関数コールされる) */
 void tracer_task(intptr_t unused) {
@@ -28,25 +32,71 @@ void tracer_task(intptr_t unused) {
     int16_t steering_amount;
     int8_t color_code = COLOR_CODE_MAX;
 
-    if (isEnd) {
+    if (phase == PHASE_END) {
         motor_stop();
         ext_tsk();
     }
 
+    switch (phase) {
+        case PHASE_START:
+            LOG_D_TEST("phase_start.\n");
+            change_target_reflect(COLOR_CODE_BLACK);
+            motor_stop();
+            phase = LINE_TRACE;
+
+            ext_tsk();
+            break;
+        case LINE_TRACE:
+            color_code = get_color(COLOR_CODE_BLUE);
+            if (color_code == COLOR_CODE_BLUE) {
+                LOG_D_DEBUG("Blue Line found.\n");
+                motor_stop();
+                isBlue = true;
+                phase = DOUBLE_LOOP;
+                change_target_reflect(COLOR_CODE_BLUE);
+
+                ext_tsk();
+            }
+            break;
+        case DOUBLE_LOOP:
+            if (isBlue) {
+                color_code = get_color(COLOR_CODE_BLACK);
+                if (color_code == COLOR_CODE_BLACK) {
+                    LOG_D_DEBUG("Black Line found.\n");
+                    motor_stop();
+                    isBlue = false;
+                    phase = DEBRI_REMOVE;
+                    change_target_reflect(COLOR_CODE_BLACK);
+                    init_power = 50;
+
+                    ext_tsk();
+                }
+            }
+            break;
+        case DEBRI_REMOVE:
+            color_code = get_color(COLOR_CODE_BLUE);
+            if (color_code == COLOR_CODE_BLUE) {
+                LOG_D_DEBUG("Blue Line found.\n");
+                motor_stop();
+                isBlue = true;
+                phase = PHASE_END;
+
+                ext_tsk();
+            }
+            break;
+        case PHASE_END:
+            motor_stop();
+            ext_tsk();
+            break;
+    }
+	 
     /* ステアリング操舵量の計算 */
     steering_amount = steering_amount_calculation();
 
     /* 走行モータ制御 */
     motor_steer(init_power, steering_amount);
-
-    color_code = get_color(COLOR_CODE_BLUE);
-    if (color_code == COLOR_CODE_BLUE) {
-        LOG_D_DEBUG("Blue Line found.\n");
-        motor_stop();
-        isEnd = true;
-    }
 #else
-    test_main(0);
+    test_main(1);
 #endif
 
     /* タスク終了 */
@@ -56,14 +106,10 @@ void tracer_task(intptr_t unused) {
 /* ステアリング操舵量の計算 */
 int16_t steering_amount_calculation(void){
 
-    uint16_t target_brightness; /* 目標輝度値 */
     int16_t  steering_amount;   /* ステアリング操舵量 */
 
-    /* 目標輝度値の計算 */
-    target_brightness = (LIGHT_WHITE - LIGHT_BLACK) / 3;
-
     /* ステアリング操舵量を計算 */
-    steering_amount = calculate_turn(target_brightness, t_pos);
+    steering_amount = calculate_turn(target_ref, t_pos);
 
     return steering_amount;
 }
@@ -139,6 +185,8 @@ int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
 void motor_steer(int power, int16_t turn) {
     int left_power = 0;
     int right_power = 0;
+
+    /* パラメータチェック */
 
     /* パラメータチェック */
     if (power > POWER_MAX) {
@@ -281,4 +329,3 @@ void motor_move(int power, int cm) {
 
     return;
 }
-

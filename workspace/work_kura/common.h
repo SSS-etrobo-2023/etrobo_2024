@@ -33,6 +33,7 @@ extern FILE *fp;
 
 #define LIGHT_BLACK 5    /* 黒色の光センサ値 */
 #define LIGHT_WHITE 95   /* 白色の光センサ値 */
+#define LIGHT_BLUE  25   /* 青色の光センサ値 */
 
 /* 車輪の直径(cm) */
 // TODO:後で測定する
@@ -43,7 +44,7 @@ extern FILE *fp;
   ログレベル
   1:ERROR, 2:DEBUG, 3:TEST
 */
-#define LOG_LEVEL 3
+#define LOG_LEVEL 2
 
 #ifndef OUTLOG_FILE
 #define LOG_D_TEST(format, ...)\
@@ -90,5 +91,14 @@ extern FILE *fp;
         fclose(fp);\
     }
 #endif
+
+enum phase_code {
+    PHASE_START = 0,
+    LINE_TRACE,
+    DOUBLE_LOOP,
+    DEBRI_REMOVE,
+    SMART_CARRY,
+    PHASE_END
+};
 
 #endif
