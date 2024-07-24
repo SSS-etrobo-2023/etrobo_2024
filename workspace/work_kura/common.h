@@ -2,6 +2,7 @@
 #define __COMMON_H__
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -11,10 +12,8 @@
 /* ファイルにログ出力するかどうか */
 //#define OUTLOG_FILE
 
-#if 0
-extern FILE *fp;
+/* ログファイル名 */
 #define LOG_FILE "/tmp/log.txt"
-#endif
 
 /* コースタイプの定義 */
 #define RIGHT 1
@@ -68,27 +67,18 @@ extern FILE *fp;
 #else
 #define LOG_D_TEST(format, ...)\
     if (LOG_LEVEL >= 3) {\
-        fopen_s(&fp, LOG_FILE, "a");\
-        fprintf(fp, "[%s] [TEST :%10s:L%-5d]: ", getDateTime(), getFileName(__FILE__), __LINE__);\
-        fprintf(fp, format, ##__VA_ARGS__);\
-        fclose(fp);\
+        out_log_file(3, __FILE__, __LINE__, format, ##__VA_ARGS__);\
     }
 
 #define LOG_D_DEBUG(format, ...)\
     if (LOG_LEVEL >= 2) {\
-        fopen_s(&fp, LOG_FILE, "a");\
-        fprintf(fp, "[%s] [DEBUG:%10s:L%-5d]: ", getDateTime(), getFileName(__FILE__), __LINE__);\
-        fprintf(fp, format, ##__VA_ARGS__);\
-        fclose(fp);\
+        out_log_file(2, __FILE__, __LINE__, format, ##__VA_ARGS__);\
     }
 
 
 #define LOG_D_ERROR(format, ...)\
     if (LOG_LEVEL >= 1) {\
-        fopen_s(&fp, LOG_FILE, "a");\
-        fprintf(fp, "[%s] [ERROR:%10s:L%-5d]: ", getDateTime(), getFileName(__FILE__), __LINE__);\
-        fprintf(fp, format, ##__VA_ARGS__);\
-        fclose(fp);\
+        out_log_file(1, __FILE__, __LINE__, format, ##__VA_ARGS__);\
     }
 #endif
 

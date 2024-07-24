@@ -4,6 +4,7 @@
 /* common.c の extern 宣言 */
 extern const char *getFileName(const char *path);
 extern const char *getDateTime(void);
+extern void out_log_file(uint8_t level, const char *file, const int32_t line, const char *format, ...);
 
 /* LineTracer.c の extern 宣言*/
 extern int16_t steering_amount_calculation(void);
