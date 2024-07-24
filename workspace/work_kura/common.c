@@ -51,7 +51,8 @@ void out_log_file(uint8_t level, const char *file, const int32_t line, const cha
 
     fp = fopen(LOG_FILE, "a");
     if (fp != NULL) {
-        fprintf(fp, "[%s] [%s:%-10s:L%-5d]: %s", log_lv_str[level - 1], getDateTime(), getFileName(file), line, string);
+        //fprintf(fp, "[%s] [%s:%-10s:L%-5d]: %s", log_lv_str[level - 1], getDateTime(), getFileName(file), line, string);
+        fprintf(fp, "[%s] [%-10s:L%-5d]: %s", log_lv_str[level - 1], getFileName(file), line, string);
         fclose(fp);
     }
 

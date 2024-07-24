@@ -18,7 +18,11 @@ static int t_pos = COURSE_TYPE;
 static int init_power = 70;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
+#ifdef REF_BY_RGB
+static const float Kp = 2.5;
+#else
 static const float Kp = 1.5;
+#endif
 static const float Ki = 0.1;
 static const float Kd = 0.02;
 
@@ -53,7 +57,7 @@ void tracer_task(intptr_t unused) {
                 motor_stop();
                 isBlue = true;
                 phase = DOUBLE_LOOP;
-                change_target_reflect(COLOR_CODE_BLUE);
+                //change_target_reflect(COLOR_CODE_BLUE);
 
                 ext_tsk();
             }
@@ -66,7 +70,7 @@ void tracer_task(intptr_t unused) {
                     motor_stop();
                     isBlue = false;
                     phase = DEBRI_REMOVE;
-                    change_target_reflect(COLOR_CODE_BLACK);
+                    //change_target_reflect(COLOR_CODE_BLACK);
                     init_power = 50;
 
                     ext_tsk();
@@ -96,7 +100,7 @@ void tracer_task(intptr_t unused) {
     /* 走行モータ制御 */
     motor_steer(init_power, steering_amount);
 #else
-    test_main(1);
+    test_main(2);
 #endif
 
     /* タスク終了 */
@@ -144,15 +148,46 @@ static int16_t PID(uint16_t target_ref, uint16_t obtained_ref) {
     return res;
 }
 
+#ifdef REF_BY_RGB
+/* TODO: RGB値によるライントレース制御に変えてみる */
+int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
+    int16_t turn = 0;
+    int16_t curb = 0;
+    uint16_t sensor_reflect = 0;
+    rgb_raw_t rgb;
+
+    ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
+
+    /* RGB値をもとに、反射値を求める */
+    sensor_reflect = floor(cbrt((rgb.r * 100 / 255) * (rgb.b * 100 / 255) * (rgb.b * 100 / 255)));
+    LOG_D_TEST("reflect: %d\n", target_reflect - sensor_reflect);
+
+    curb = PID(target_reflect, sensor_reflect);
+
+    /* 曲がる量が大きくなりすぎないよう、制限する */
+    if (curb > CURB_MAX) {
+        curb = CURB_MAX;
+    } else if (curb < CURB_MIN) {
+        curb = CURB_MIN;
+    }
+
+    /* @memo: 左右で turn を逆にする
+              左トレースの場合、回転方向を逆にする */
+    if (trace_pos == LEFT) {
+        turn = -curb;
+    } else {
+        turn = curb;
+    }
+
+    LOG_D_TEST("turn: %d\n", turn);
+    return turn;
+}
+#else
 int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
     int16_t turn = 0;
     int16_t curb = 0;
     uint16_t sensor_reflect = 0;
 
-    /*
-     * @memo: 青線をトレースできるよう、センサの値を 1/3 しておく。
-     *        将来的に変更の可能性あり。
-     */
     sensor_reflect = ev3_color_sensor_get_reflect(color_sensor);
     LOG_D_TEST("reflect: %d\n", target_reflect - sensor_reflect);
 
@@ -176,7 +211,7 @@ int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
     LOG_D_TEST("turn: %d\n", turn);
     return turn;
 }
-
+#endif
 
 /*
  * 2つのモータでステアリング動作を行う

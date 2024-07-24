@@ -15,6 +15,9 @@
 /* ログファイル名 */
 #define LOG_FILE "/tmp/log.txt"
 
+/* RGB値による反射値の計算を行うか */
+#define REF_BY_RGB
+
 /* コースタイプの定義 */
 #define RIGHT 1
 #define LEFT  2
@@ -25,14 +28,19 @@
 #define POWER_MIN  -100
 #define TURN_MAX   100
 #define TURN_MIN   -100
-#define CURB_MAX   80
-#define CURB_MIN   -80
+#define CURB_MAX   100
+#define CURB_MIN   -100
 #define DEGREE_MAX 360
 #define DEGREE_MIN -360
 
 #define LIGHT_BLACK 5    /* 黒色の光センサ値 */
 #define LIGHT_WHITE 95   /* 白色の光センサ値 */
 #define LIGHT_BLUE  25   /* 青色の光センサ値 */
+
+/* RGB値による反射値 */
+#define LIGHT_BLACK_RGB 5    /* 黒色の光センサ値 */
+#define LIGHT_WHITE_RGB 65   /* 白色の光センサ値 */
+#define LIGHT_BLUE_RGB  12   /* 青色の光センサ値 */
 
 /* 車輪の直径(cm) */
 // TODO:後で測定する

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "app.h"
 #include "color.h"
@@ -10,11 +11,9 @@
 static uint8_t count = 0;
 static const uint16_t count_max = 1000 * 1000 / LINE_TRACER_PERIOD; /* 1秒周期 */
 
-#if 1
 char code_str[COLOR_CODE_MAX + 1][10] = {
     "RED", "BLUE", "GREEN", "YELLOW", "BLACK", "WHITE", "UNKNOWN"
 };
-#endif
 
 void test_main(int8_t type) {
     int color_code;
@@ -34,6 +33,15 @@ void test_main(int8_t type) {
         /* 反射光のテスト */
         LOG_D_TEST("reflect: %d\n", ev3_color_sensor_get_reflect(color_sensor));
     } else if (type == 2) {
+        /* RGB値による反射光を求めるテスト */
+        rgb_raw_t rgb;
+        uint16_t reflect;
+
+        ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
+
+        reflect = floor(cbrt((rgb.r * 100 / 255) * (rgb.b * 100 / 255) * (rgb.b * 100 / 255)));
+        LOG_D_DEBUG("reflect: %d\n", reflect);
+    } else if (type == 3) {
         /* 動作確認 */
         motor_move(75, 30); /* 30cm 前進 */
 
