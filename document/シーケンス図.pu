@@ -1,0 +1,87 @@
+@startuml
+title シーケンス図
+
+actor 競技者
+participant 走行
+participant 命令
+participant モータ
+participant カラー
+participant EV3_API
+
+競技者 -> 走行 : デブリリムーバブル開始
+activate 走行
+
+loop 無限ループ
+    走行 -> カラー : get_color()
+    activate カラー
+    カラー -> EV3_API : ev3_color_sensor_get_rgb_raw()
+    activate EV3_API
+    EV3_API -> カラー : return : RGB値
+    deactivate EV3_API
+    カラー -> カラー : RGB値から色判定を行う
+    カラー -> 走行 : return : int8_t 判定結果
+    deactivate カラー
+
+    alt 走行体が最後のサークル上にある 
+        note right 走行
+            ディセーブルゾーンに移動する
+        end note
+
+        break 無限ループ
+            走行 -> 命令 : deb_move_disable_zone()
+            activate 命令
+            命令 -> モータ : motor_rotate()
+            activate モータ
+            モータ -> EV3_API : ev3_motor_set_power()
+            activate EV3_API
+            EV3_API -> モータ
+            deactivate EV3_API
+            モータ -> 命令
+            deactivate モータ
+            命令 -> 走行
+            deactivate 命令
+        end
+    else 走行体がサークル上にある
+        note right 走行
+            走行体の位置に応じて
+            いずれかの命令を呼び出す
+        end note
+
+        走行 -> 命令 : deb_remove_straight()
+        activate 命令
+        走行 -> 命令 : deb_remove_turn()
+        命令 -> モータ : motor_rotate()
+        activate モータ
+        モータ -> EV3_API : ev3_motor_set_power()
+        activate EV3_API
+        EV3_API -> モータ
+        deactivate EV3_API
+        モータ -> 命令
+        deactivate モータ
+        命令 -> 走行
+        deactivate 命令
+    else 走行体がサークル上にない
+        note right 走行
+            ライントレースを行う
+        end note
+        
+        走行 -> 命令 : linetrace()
+        activate 命令
+        命令 -> モータ : motor_rotate()
+        activate モータ
+        モータ -> EV3_API : ev3_motor_set_power()
+        activate EV3_API
+        EV3_API -> モータ
+        deactivate EV3_API
+        モータ -> 命令
+        deactivate モータ
+        命令 -> 走行
+        deactivate 命令
+    end
+
+end
+
+走行 -> 競技者 : デブリリムーバブル終了
+deactivate 走行
+
+@enduml

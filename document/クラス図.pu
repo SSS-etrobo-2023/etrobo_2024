@@ -1,0 +1,46 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+package 走行パッケージ {
+    class 走行 {
+        +tracer_task(unused: intptr_t) : void
+    }
+}
+
+package カラーパッケージ {
+    class 色判定 {
+        +get_color(code: int8_t) : int8_t
+    }
+}
+
+package 命令パッケージ {
+    class 命令リスト {
+        +linetrace() : void
+        +deb_remove_straight() : void
+        +deb_remove_turn(turn: int) : void
+        +deb_move_disable_zone() : void
+    }
+}
+
+package モータパッケージ {
+    class モータ制御 {
+        +motor_rotate(power: int, degree: int) : void
+    }
+}
+
+package EV3_APIパッケージ {
+    class モータAPI {
+        +ev3_motor_set_power(port: motor_port_t) : ER
+    }
+
+    class カラーセンサAPI {
+        +ev3_color_sensor_get_rgb_raw(sensor_port_t: port, rgb_raw_t *: val) : vo
+    }
+}
+
+走行 "1" o-- "1" 色判定
+走行 "1" o-- "1" 命令リスト
+命令リスト "1" o-- "1" モータ制御
+モータ制御 "1" o-- "2" モータAPI
+色判定 "1" o-- "1" カラーセンサAPI

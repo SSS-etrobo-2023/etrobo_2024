@@ -1,0 +1,30 @@
+@@startuml
+
+actor 競技者
+
+rectangle 走行システム {
+    usecase 走行
+    rectangle 命令リスト {
+        usecase ライントレース
+        usecase 直進
+        usecase 転回
+        usecase ディセーブルゾーン移動
+    }
+    usecase 色判定
+    usecase モータ制御
+    note bottom of 走行 : 走行体の位置によって\n呼び出す命令を変える
+}
+
+競技者 - 走行
+走行 ..> ライントレース : <<include>>
+走行 ..> 直進 : <<include>>
+走行 ...> 転回 : <<include>>
+走行 ...> ディセーブルゾーン移動 : <<include>>
+走行 .> 色判定 : <<include>>
+ライントレース ..> モータ制御 : <<include>>
+直進 ..> モータ制御 : <<include>>
+転回 ..> モータ制御 : <<include>>
+ディセーブルゾーン移動 ..> モータ制御 : <<include>>
+
+
+@@enduml
