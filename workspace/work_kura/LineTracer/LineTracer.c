@@ -42,12 +42,14 @@ char color_str[COLOR_CODE_MAX + 1][10] = {
 };
 
 /* EBD_DEB の前は STRAIGHT にすること */
-#if 0 /* for test */
+#if 1 /* for test */
 const int8_t deb_order[] = {
     TURN_LEFT,
     STRAIGHT,
     TURN_RIGHT,
     TURN_RIGHT,
+    STRAIGHT,
+    TURN_LEFT,
     STRAIGHT,
     TURN_LEFT,
     STRAIGHT,
@@ -141,7 +143,7 @@ void tracer_task(intptr_t unused) {
                     1+1;
                 } else if (pwr_cnt++ < 10) {
                     LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
-                    init_power = 65;
+                    init_power = 55;
                 } else {
                     init_power = 35;
                 }
@@ -159,7 +161,7 @@ void tracer_task(intptr_t unused) {
                 }
             } else {
                 if (pwr_cnt++ < 30) {
-                    init_power = 65;
+                    init_power = 55;
                 } else {
                     init_power = 35;
                 }
@@ -484,12 +486,12 @@ void deb_remove_turn(int turn) {
         deg_1st *= -1;
         deg_2nd *= -1;
     } else {
-        //deg_1st = 30;
+        deg_1st = 40;
         //deg_2nd = 25;
     }
 
     /* 45度回転 */
-    motor_rotate(50, deg_1st);
+    motor_rotate(55, deg_1st);
 
     /* 少し進む(誤検知防止) */
     motor_move(50, 3);
@@ -506,7 +508,7 @@ void deb_remove_turn(int turn) {
     }
 
     /* さらに45度回転 */
-    motor_rotate(50, deg_2nd);
+    motor_rotate(55, deg_2nd);
 
     /* 左回転の後は左追っかけ、
        右回転の後は右追っかけになるよう設定 */
