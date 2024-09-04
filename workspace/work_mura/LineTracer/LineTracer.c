@@ -32,10 +32,10 @@ static const float T = 0.01;
 static const float Kp = 3.5;
 
 #else
-static const float Kp = 3.5;
+static const float Kp = 3;
 #endif
-static const float Ki = 0.01;
-static const float Kd = 0.15;
+static const float Ki = 0.015;
+static const float Kd = 0.25;
 
 static int8_t isBlue = false;
 static int8_t isEnd = false;
@@ -66,16 +66,11 @@ void tracer_task(intptr_t unused) {
         case LINE_TRACE:
             if (linetrace_find_blue() == 1) {
                 LOG_D_DEBUG("Blue Line found.\n");
-    ev3_color_sensor_get_rgb_raw(color_sensor, &testrgb);
-        LOG_D_DEBUG("r: %d\n", testrgb.r);
-        LOG_D_DEBUG("g: %d\n", testrgb.g);
-        LOG_D_DEBUG("b: %d\n", testrgb.b);
+                ev3_color_sensor_get_rgb_raw(color_sensor, &testrgb);
                 motor_stop();
                 isBlue = true;
-                change_refrect(2);
                 init_power = 60;
                 phase = DOUBLE_LOOP;
-                //change_target_reflect(COLOR_CODE_BLUE);
 
                 ext_tsk();
             }
@@ -86,7 +81,7 @@ void tracer_task(intptr_t unused) {
                     black_c++;
                     blue_c = 0;
                 }
-                if (linetrace_find_black() == 1 && black_c >= 2) {
+                if (linetrace_find_black() == 1 && black_c >= 3) {
                     LOG_D_DEBUG("Black Line found.\n");
                     isBlue = false;
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
@@ -119,7 +114,7 @@ void tracer_task(intptr_t unused) {
             if (isLineChange) {
                 line_change_count++;
             }
-            if (isLineChange && line_change_count >= 200) {
+            if (isLineChange && line_change_count >= 100) {
                 isLineChange = false;
                 LOG_D_DEBUG("change");
                 line_change_count = 0;
@@ -128,9 +123,8 @@ void tracer_task(intptr_t unused) {
             if (blue_count > 3) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
-                //change_target_reflect(COLOR_CODE_BLACK);
                 init_power = 60;
-
+                change_target_reflect(COLOR_CODE_BLACK);
                 ext_tsk();
             }
             break;
@@ -435,7 +429,6 @@ int linetrace_find_blue() {
         return 1;
     }
     return 2;
-    
 }
 
 int linetrace_find_black() {

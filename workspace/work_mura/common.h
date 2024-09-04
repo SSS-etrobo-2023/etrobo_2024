@@ -39,7 +39,7 @@
 
 /* RGB値による反射値 */
 #define LIGHT_BLACK_RGB 5    /* 黒色の光センサ値 */
-#define LIGHT_WHITE_RGB 65   /* 白色の光センサ値 */
+#define LIGHT_WHITE_RGB 85   /* 白色の光センサ値 */
 #define LIGHT_BLUE_RGB  15   /* 青色の光センサ値 */
 
 /* 車輪の直径(cm) */

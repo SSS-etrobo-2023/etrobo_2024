@@ -28,9 +28,6 @@ static int8_t judge_color(rgb_raw_t rgb, int8_t code) {
             if (rgb.b > thre_color[code].b &&
                 rgb.b > 3.5 * rgb.r &&
                 rgb.b > 1.2 * rgb.g) {
-        LOG_D_DEBUG("r: %d\n", rgb.r);
-        LOG_D_DEBUG("g: %d\n", rgb.g);
-        LOG_D_DEBUG("b: %d\n", rgb.b);
                 return COLOR_CODE_BLUE;
             }
             break;

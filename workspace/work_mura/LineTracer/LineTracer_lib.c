@@ -59,11 +59,11 @@ void change_target_reflect(int color_code) {
 
 void change_refrect(int target) {
     if(target == 1) {
-        target_ref = def_reflect[COLOR_CODE_BLACK] * 1.2;
+        target_ref = (REF_BLACK_RGB/2) * 1.2;
     } else if (target == 2){
-        target_ref = def_reflect[COLOR_CODE_BLACK] * 0.8;
+        target_ref = (REF_BLACK_RGB/2) * 0.8;
     } else {
-        target_ref = def_reflect[COLOR_CODE_BLACK];
+        target_ref = (REF_BLACK_RGB/2);
     }
     return;
 }

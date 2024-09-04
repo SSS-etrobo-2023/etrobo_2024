@@ -77,13 +77,13 @@ int test_linetrace_find_blue() {
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
     
-    if (rgb.b > 70 &&
-        rgb.b > 1.4 * rgb.r &&
+    if (rgb.b > 80 &&
+        rgb.b > 1.6 * rgb.r &&
+        rgb.g > rgb.r * 1.2 &&
         rgb.b > 1.1 * rgb.g) {
         return 1;
     }
     return 2;
-    
 }
 
 int test_linetrace_find_black() {
@@ -91,10 +91,11 @@ int test_linetrace_find_black() {
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
     
-    if (rgb.r < 70 &&
-        rgb.g < 70 &&
-        rgb.b < 65) {
+    if (rgb.r < 90 &&
+        rgb.g < 90 &&
+        rgb.b < 90 &&
+        rgb.b < rgb.r * 1.1) {
         return 1;
     }
-    return 2;   
+    return 2;  
 }
