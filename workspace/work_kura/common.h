@@ -6,6 +6,9 @@
 
 #include "extern.h"
 
+/* 本番環境 */
+//#define PRODUCTION
+
 /* テストモード */
 //#define MODE_TEST
 
@@ -38,13 +41,20 @@
 #define LIGHT_BLUE  25   /* 青色の光センサ値 */
 
 /* RGB値による反射値 */
+#ifndef PRODUCTION
 #define LIGHT_BLACK_RGB 5    /* 黒色の光センサ値 */
-#define LIGHT_WHITE_RGB 65   /* 白色の光センサ値 */
+#define LIGHT_WHITE_RGB 60   /* 白色の光センサ値 */
 #define LIGHT_BLUE_RGB  12   /* 青色の光センサ値 */
+#else
+/* 本番環境 */
+#define LIGHT_BLACK_RGB 5    /* 黒色の光センサ値 */
+#define LIGHT_WHITE_RGB 60   /* 白色の光センサ値 */
+#define LIGHT_BLUE_RGB  15   /* 青色の光センサ値 */
+#endif
 
-/* 車輪の直径(cm) */
+/* 車輪の半径(cm) */
 // TODO:後で測定する
-#define DIAMETER 10
+#define DIAMETER 5
 #define PI 3
 
 /*

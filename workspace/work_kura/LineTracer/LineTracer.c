@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <math.h>
 
 #include "app.h"
@@ -15,7 +16,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 70;
+static int init_power = 60;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 #ifdef REF_BY_RGB
@@ -24,12 +25,46 @@ static const float Kp = 2.5;
 static const float Kp = 1.5;
 #endif
 static const float Ki = 0.1;
-static const float Kd = 0.02;
+static const float Kd = 0.03;
 
 static int8_t isBlue = false;
-static int8_t isEnd = false;
 static int8_t phase = PHASE_START;
 
+/* デブリリムーバブル用フラグ */
+static int8_t deb_cnt = 0;
+static uint32_t pwr_cnt = 100;
+static int8_t isStart = 0;
+static int8_t isOnCircle = false;
+static int8_t isOnLine = false;
+
+char color_str[COLOR_CODE_MAX + 1][10] = {
+    "RED", "BLUE", "GREEN", "YELLOW", "BLACK", "WHITE", "UNKNOWN"
+};
+
+/* EBD_DEB の前は STRAIGHT にすること */
+#if 0 /* for test */
+const int8_t deb_order[] = {
+    TURN_LEFT,
+    STRAIGHT,
+    TURN_RIGHT,
+    TURN_RIGHT,
+    STRAIGHT,
+    TURN_LEFT,
+    STRAIGHT,
+    STRAIGHT,
+    END_DEB
+};
+#else
+const int8_t deb_order[] = {
+    //STRAIGHT,
+    TURN_LEFT,
+    STRAIGHT,
+    TURN_RIGHT,
+    STRAIGHT,
+    END_DEB
+};
+
+#endif
 /* ライントレースタスク(10msec周期で関数コールされる) */
 void tracer_task(intptr_t unused) {
 #ifndef MODE_TEST
@@ -70,22 +105,72 @@ void tracer_task(intptr_t unused) {
                     motor_stop();
                     isBlue = false;
                     phase = DEBRI_REMOVE;
+                    isOnLine = true;
                     //change_target_reflect(COLOR_CODE_BLACK);
-                    init_power = 50;
+                    init_power = 40;
 
                     ext_tsk();
                 }
             }
             break;
         case DEBRI_REMOVE:
-            color_code = get_color(COLOR_CODE_BLUE);
-            if (color_code == COLOR_CODE_BLUE) {
-                LOG_D_DEBUG("Blue Line found.\n");
-                motor_stop();
-                isBlue = true;
-                phase = PHASE_END;
+            if (isOnCircle) {
+                switch (deb_order[deb_cnt]) {
+                    case STRAIGHT:
+                        deb_remove_straight();
+                        break;
+                    case TURN_RIGHT:
+                        deb_remove_turn(RIGHT);
+                        break;
+                    case TURN_LEFT:
+                        deb_remove_turn(LEFT);
+                        break;
+                    case END_DEB:
+                        phase = PHASE_END;
+                        LOG_D_DEBUG("end run.\n");
+                        break;
+                }
 
-                ext_tsk();
+                deb_cnt++;
+                isStart = 1;
+                pwr_cnt = 0;
+                isOnCircle = false;
+                isOnLine = false;
+            } else if (isOnLine) {
+                if (!isStart) {
+                    1+1;
+                } else if (pwr_cnt++ < 10) {
+                    LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
+                    init_power = 65;
+                } else {
+                    init_power = 35;
+                }
+
+                color_code = get_color(COLOR_CODE_MAX);
+                if (color_code != COLOR_CODE_BLACK &&
+                    color_code != COLOR_CODE_WHITE &&
+                    color_code != COLOR_CODE_MAX) {
+                    LOG_D_DEBUG("circle found. color: %s\n", color_str[color_code]);
+                    motor_stop();
+                    isOnCircle = true;
+                    isOnLine = false;
+
+                    ext_tsk();
+                }
+            } else {
+                if (pwr_cnt++ < 30) {
+                    init_power = 65;
+                } else {
+                    init_power = 35;
+                }
+
+                color_code = get_color(COLOR_CODE_BLACK);
+                if (color_code == COLOR_CODE_BLACK) {
+                    LOG_D_DEBUG("Black Line found.\n");
+                    isOnCircle = false;
+                    isOnLine = true;
+                    pwr_cnt = 0;
+                }
             }
             break;
         case PHASE_END:
@@ -100,7 +185,7 @@ void tracer_task(intptr_t unused) {
     /* 走行モータ制御 */
     motor_steer(init_power, steering_amount);
 #else
-    test_main(2);
+    test_main(0);
 #endif
 
     /* タスク終了 */
@@ -244,10 +329,16 @@ void motor_steer(int power, int16_t turn) {
         /* 右転回 */
         left_power  = power;
 	right_power = (power * (100 - turn)) / 100;
+        if (right_power < (power/10)) {
+            right_power = power/10;
+        }
     } else if (turn < 0) {
         /* 左転回 */
         left_power  = (power * (100 + turn)) / 100;
 	right_power = power;
+        if (left_power < (power/10)) {
+            left_power = power/10;
+        }
     } else {
         /* 直進 */
         left_power = power;
@@ -263,14 +354,29 @@ void motor_steer(int power, int16_t turn) {
 }
 
 void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
+    int32_t init_l_cnt = 0;
+    int32_t init_r_cnt = 0;
     int32_t left_count = 0;
     int32_t right_count = 0;
+    //int8_t l_end = 0, r_end = 0;
 
+    init_l_cnt = ev3_motor_get_counts(left_motor);
+    init_r_cnt = ev3_motor_get_counts(right_motor);
+    //LOG_D_DEBUG("init_left_motor: %ld deg, init_right_motor: %ld deg\n", init_l_cnt, init_r_cnt);
     motor_stop();
 
-    /* @memo: sleep させる？*/
-
     reset_motor_counts();
+    /* motor_count が reset されるまで待つ */
+    while(1) {
+        left_count = ev3_motor_get_counts(left_motor);
+        right_count = ev3_motor_get_counts(right_motor);
+        if (abs(left_count) < abs(init_l_cnt) && abs(right_count) < abs(init_r_cnt)) {
+            LOG_D_DEBUG("START: left_motor: %ld deg, right_motor: %ld deg\n", left_count, right_count);
+            init_l_cnt = left_count;
+            init_r_cnt = right_count;
+            break;
+        }
+    }
 
     set_motor_power(left_power, right_power);
 
@@ -279,14 +385,17 @@ void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
         right_count = ev3_motor_get_counts(right_motor);
 
         /* @memo: この判定は実動作で確認して調整すること */
-        if ((abs(left_count) >= abs(count)) && (abs(right_count) >= abs(count))) {
-            LOG_D_TEST("left_motor: %ld deg, right_motor: %ld deg\n", left_count, right_count);
+        if (abs(left_count - init_l_cnt) >= abs(count) &&
+            abs(right_count - init_r_cnt) >= abs(count)) {
+            LOG_D_DEBUG("END: left_motor: %ld deg, right_motor: %ld deg\n", left_count, right_count);
+            LOG_D_DEBUG("left_motor: %ld deg, right_motor: %ld deg\n",
+                        abs(left_count - init_l_cnt), abs(right_count - init_r_cnt));
             break;
         }
     }
 
     /* 回転終了後は停止状態にする */
-    motor_stop();
+    //motor_stop();
 
     return;
 }
@@ -358,9 +467,64 @@ void motor_move(int power, int cm) {
 
     /* 指定距離動くために必要な角度を求める */
     /* @memo: このパラメータは実動作で確認して調整すること */
-    degree = (360 * cm) / (DIAMETER * PI);
+    degree = (180 * cm) / (DIAMETER * PI * 2);
 
     motor_rotate_spec_count(power, power, degree);
+
+    return;
+}
+
+/* サークルを転回する */
+void deb_remove_turn(int turn) {
+    int8_t color_code = COLOR_CODE_MAX;
+    int8_t deg_1st = 45;
+    int8_t deg_2nd = 45;
+
+    if (LEFT == turn) {
+        deg_1st *= -1;
+        deg_2nd *= -1;
+    } else {
+        //deg_1st = 30;
+        //deg_2nd = 25;
+    }
+
+    /* 45度回転 */
+    motor_rotate(50, deg_1st);
+
+    /* 少し進む(誤検知防止) */
+    motor_move(50, 3);
+
+    set_motor_power(55, 50);
+
+    /* 黒線を見つけるまで直進 */
+    while (1) {
+        color_code = get_color(COLOR_CODE_BLACK);
+        if (color_code == COLOR_CODE_BLACK) {
+            LOG_D_DEBUG("Black found.\n");
+            break;
+        }
+    }
+
+    /* さらに45度回転 */
+    motor_rotate(50, deg_2nd);
+
+    /* 左回転の後は左追っかけ、
+       右回転の後は右追っかけになるよう設定 */
+    t_pos = change_trace_pos(turn == LEFT ? RIGHT : LEFT);
+
+    set_motor_power(0, 0);
+
+    return;
+}
+
+/* サークルを直進する */
+void deb_remove_straight(void) {
+#ifndef PRODUCTION
+    motor_move(65, 10);
+#else
+    motor_move(65, 9);
+#endif
+    set_motor_power(0, 0);
 
     return;
 }

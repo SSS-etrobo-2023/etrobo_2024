@@ -1,23 +1,11 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __LINETRACER_H__
+#define __LINETRACER_H__
 
-/* 下記の項目は各ロボットに合わせて変えること */
+enum deb_order_code {
+    STRAIGHT = 0,
+    TURN_RIGHT,
+    TURN_LEFT,
+    END_DEB
+};
 
-/* カラーセンサの輝度設定 */
-#define WHITE_BRIGHTNESS  (95)
-#define BLACK_BRIGHTNESS  (5) 
-
-/* ステアリング操舵量の係数 */
-#define STEERING_COEF     (0.2F) 
-
-/* 走行基準スピード */
-#define BASE_SPEED        (40) 
-
-/* ライントレースエッジ切り替え */
-#define LEFT_EDGE         (-1) 
-#define RIGHT_EDGE        (1) 
-
-#ifdef __cplusplus
-}
 #endif

@@ -43,11 +43,15 @@ void test_main(int8_t type) {
         LOG_D_DEBUG("reflect: %d\n", reflect);
     } else if (type == 3) {
         /* 動作確認 */
-        motor_move(75, 30); /* 30cm 前進 */
+        motor_rotate(50, -90); /* 90度左に回転 */
 
         sleep(1);
 
-        motor_rotate(75, 90); /* 90度右に回転 */
+        motor_rotate(50, -80); /* 80度左に回転 */
+
+        sleep(1);
+
+        motor_rotate(50, -70); /* 70度左に回転 */
 
         sleep(1);
     }

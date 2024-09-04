@@ -5,6 +5,7 @@
 #include <common.h>
 #include <extern.h>
 
+#if 0
 const THRE_COLOR_t thre_color[COLOR_CODE_MAX] = {
 /*   r  , g  , b */
     {90 , 30 , 40 }, /* 赤 */
@@ -14,6 +15,17 @@ const THRE_COLOR_t thre_color[COLOR_CODE_MAX] = {
     {25 , 25 , 25 }, /* 黒 */
     {100, 100, 100}  /* 白 */
 };
+#else
+const THRE_COLOR_t thre_color[COLOR_CODE_MAX] = {
+/*   r  , g  , b */
+    {100, 50 , 75 }, /* 赤 */
+    {20 , 45 , 50 }, /* 青 */
+    {30 , 45 , 45 }, /* 緑 */
+    {110, 100, 90 }, /* 黄 */
+    {25 , 25 , 25 }, /* 黒 */
+    {100, 100, 100}  /* 白 */
+};
+#endif
 
 static int8_t judge_color(rgb_raw_t rgb, int8_t code) {
     switch (code) {
