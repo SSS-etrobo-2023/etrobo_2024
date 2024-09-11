@@ -18,7 +18,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 70;
+static int init_power = 60;
 // ライン変更の際のインターバル
 static int black_c = 0;
 static int black_interval = 5;
@@ -27,14 +27,15 @@ static int blue_interval = 5;
 // ライントレースの偏り
 static bool isLineChange = false;
 static int line_change_count = 0;
+static const int line_chang_iinterval = 100;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 #ifdef REF_BY_RGB
-static const float Kp = 3.5;
+static const float Kp = 3.0;
 #else
 static const float Kp = 1.5;
 #endif
-static const float Ki = 0.01;
+static const float Ki = 0;
 static const float Kd = 0.15;
 
 static int8_t isBlue = false;
@@ -101,6 +102,7 @@ void tracer_task(intptr_t unused) {
                 LOG_D_DEBUG("Blue Line found.\n");
                 motor_stop();
                 isBlue = true;
+                init_power = 55;
                 phase = DOUBLE_LOOP;
                 //change_target_reflect(COLOR_CODE_BLUE);
 
@@ -108,7 +110,14 @@ void tracer_task(intptr_t unused) {
             }
             break;
         case DOUBLE_LOOP:
+            // isBlueで現在青の上にいるかどうかを判定する。
+            // 青を検知したらisBlueをtrueにし、次に黒を検出したらfalseにする
+            // 青→黒を検出した時右(左)追っかけから左(右)追っかけに変更する
+            // change_refrect関数により青の上にいる時はtarget_refを黒寄りに、
+            // 黒を検出した瞬間だけ白寄りにすることでスムーズなトレース方向変更を期待している
+            // 現状あまりうまくいっていないためこの部分は要改善
             if (isBlue) {
+                // 黒を2フレーム以上検知したら黒判定
                 if (linetrace_find_black() == 1) {
                     black_c++;
                     blue_c = 0;
@@ -117,34 +126,24 @@ void tracer_task(intptr_t unused) {
                     LOG_D_DEBUG("Black Line found.\n");
                     isBlue = false;
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
-                    init_power = 70;
                     blue_count++;
                     isLineChange = true;
                     change_refrect(1);
                     LOG_D_DEBUG("blue_count: %d\n", blue_count);
                 }
             } else {
+                // 青を2フレーム以上検知したら青判定
                 if (linetrace_find_blue() == 1) {
                     blue_c++;
                     black_c = 0;
                 }
-                if (linetrace_find_blue() == 1 && blue_c >= 3) {
+                if (linetrace_find_blue() == 1 && blue_c >= 2) {
                     LOG_D_DEBUG("Blue Line found.\n");
-                    change_refrect(2);
-                    init_power = 70;
+                    change_refrect(0);
                     isBlue = true;
                 }
             } 
-            if (isLineChange) {
-                LOG_D_DEBUG("count\n");
-                line_change_count++;
-            }
-            if (isLineChange && line_change_count >= 200) {
-                isLineChange = false;
-                LOG_D_DEBUG("change\n");
-                line_change_count = 0;
-                change_refrect(0);
-            }
+            // ダブルループ終了
             if (blue_count > 3) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
@@ -183,7 +182,7 @@ void tracer_task(intptr_t unused) {
                     LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
                     init_power = 65;
                 } else {
-                    init_power = 35;
+                    init_power = 45;
                 }
 
                 color_code = get_color(COLOR_CODE_MAX);
@@ -588,10 +587,10 @@ int linetrace_find_black() {
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
     
-    if (rgb.r < 90 &&
-        rgb.g < 90 &&
-        rgb.b < 90 &&
-        rgb.b < rgb.r * 1.2) {
+    if (rgb.r < 100 &&
+        rgb.g < 100 &&
+        rgb.b < 100 &&
+        rgb.b < rgb.r * 1.15) {
         return 1;
     }
     return 2;
