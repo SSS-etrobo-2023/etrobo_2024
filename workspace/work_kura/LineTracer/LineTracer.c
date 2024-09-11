@@ -16,16 +16,16 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 60;
+static int init_power = 65;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 #ifdef REF_BY_RGB
-static const float Kp = 2.5;
+static const float Kp = 2.0;
 #else
 static const float Kp = 1.5;
 #endif
-static const float Ki = 0.1;
-static const float Kd = 0.03;
+static const float Ki = 0.01;
+static const float Kd = 0.2;
 
 static int8_t isBlue = false;
 static int8_t phase = PHASE_START;
@@ -42,7 +42,7 @@ char color_str[COLOR_CODE_MAX + 1][10] = {
 };
 
 /* EBD_DEB の前は STRAIGHT にすること */
-#if 1 /* for test */
+#if 0 /* for test */
 const int8_t deb_order[] = {
     TURN_LEFT,
     STRAIGHT,
@@ -58,10 +58,10 @@ const int8_t deb_order[] = {
 };
 #else
 const int8_t deb_order[] = {
-    //STRAIGHT,
+    STRAIGHT,
+    STRAIGHT,
     TURN_LEFT,
     STRAIGHT,
-    TURN_RIGHT,
     STRAIGHT,
     END_DEB
 };
@@ -128,7 +128,8 @@ void tracer_task(intptr_t unused) {
                         deb_remove_turn(LEFT);
                         break;
                     case END_DEB:
-                        phase = PHASE_END;
+                        phase = SMART_CARRY;
+                        isBlue = false;
                         LOG_D_DEBUG("end run.\n");
                         break;
                 }
@@ -143,7 +144,7 @@ void tracer_task(intptr_t unused) {
                     1+1;
                 } else if (pwr_cnt++ < 10) {
                     LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
-                    init_power = 55;
+                    init_power = 60;
                 } else {
                     init_power = 35;
                 }
@@ -161,7 +162,7 @@ void tracer_task(intptr_t unused) {
                 }
             } else {
                 if (pwr_cnt++ < 30) {
-                    init_power = 55;
+                    init_power = 60;
                 } else {
                     init_power = 35;
                 }
@@ -174,6 +175,39 @@ void tracer_task(intptr_t unused) {
                     pwr_cnt = 0;
                 }
             }
+            break;
+        case SMART_CARRY:
+            if (!isBlue) {
+                /* 少し進む(誤検知防止) */
+                motor_move(50, 3);
+ 
+                /* 個体差により調整する */
+                set_motor_power(52, 50);
+ 
+                /* 黒線を見つけるまで直進 */
+                while (1) {
+                    color_code = get_color(COLOR_CODE_BLACK);
+                    if (color_code == COLOR_CODE_BLACK) {
+                        LOG_D_DEBUG("Black found.\n");
+                        break;
+                    }
+                }
+ 
+                motor_rotate(60, 85);
+                isBlue = true;
+                init_power = 65;
+            }
+
+            color_code = get_color(COLOR_CODE_BLUE);
+            if (color_code == COLOR_CODE_BLUE) {
+                LOG_D_DEBUG("Blue Line found.\n");
+                motor_stop();
+
+                phase = PHASE_END;
+                motor_stop();
+                ext_tsk();
+            }
+
             break;
         case PHASE_END:
             motor_stop();
@@ -471,7 +505,9 @@ void motor_move(int power, int cm) {
     /* @memo: このパラメータは実動作で確認して調整すること */
     degree = (180 * cm) / (DIAMETER * PI * 2);
 
-    motor_rotate_spec_count(power, power, degree);
+    motor_rotate_spec_count(t_pos == LEFT ? power : power + 5,
+                            t_pos == LEFT ? power + 5 : power,
+                            degree);
 
     return;
 }
@@ -480,13 +516,13 @@ void motor_move(int power, int cm) {
 void deb_remove_turn(int turn) {
     int8_t color_code = COLOR_CODE_MAX;
     int8_t deg_1st = 45;
-    int8_t deg_2nd = 45;
+    int8_t deg_2nd = 40;
 
     if (LEFT == turn) {
         deg_1st *= -1;
         deg_2nd *= -1;
     } else {
-        deg_1st = 40;
+        deg_1st = 35;
         //deg_2nd = 25;
     }
 
