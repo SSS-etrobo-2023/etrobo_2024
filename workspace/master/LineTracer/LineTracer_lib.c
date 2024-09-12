@@ -66,7 +66,7 @@ void change_refrect(int target) {
     if(target == 1) {
         target_ref = (REF_BLACK_RGB/2) * 1.2;
     } else if (target == 2){
-        target_ref = (REF_BLACK_RGB/2) * 0.9;
+        target_ref = (REF_BLACK_RGB/2) * 1.05;
     } else {
         target_ref = (REF_BLACK_RGB/2);
     }

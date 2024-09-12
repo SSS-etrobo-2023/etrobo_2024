@@ -18,7 +18,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 60;
+static int init_power = 65;
 // ライン変更の際のインターバル
 static int black_c = 0;
 static int black_interval = 5;
@@ -124,7 +124,7 @@ void tracer_task(intptr_t unused) {
                     black_c++;
                     blue_c = 0;
                 }
-                if (linetrace_find_black() == 1 && black_c >= 2) {
+                if (linetrace_find_black() == 1 && black_c >= 3) {
                     LOG_D_DEBUG("Black Line found.\n");
                     isBlue = false;
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
@@ -150,8 +150,7 @@ void tracer_task(intptr_t unused) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
                 Kp = 2.0;
-                init_power = 60;
-                change_target_reflect(COLOR_CODE_BLACK);
+                change_refrect(1);
                 ext_tsk();
             }
             break;
@@ -185,7 +184,7 @@ void tracer_task(intptr_t unused) {
                     LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
                     init_power = 65;
                 } else {
-                    init_power = 35;
+                    init_power = 40;
                 }
 
                 if (!isStart) {
@@ -197,6 +196,7 @@ void tracer_task(intptr_t unused) {
                     color_code != COLOR_CODE_WHITE &&
                     color_code != COLOR_CODE_MAX) {
                     LOG_D_DEBUG("circle found. color: %s\n", color_str[color_code]);
+                    change_target_reflect(COLOR_CODE_BLACK);
                     motor_stop();
                     isOnCircle = true;
                     isOnLine = false;
@@ -207,7 +207,7 @@ void tracer_task(intptr_t unused) {
                 if (pwr_cnt++ < 30) {
                     init_power = 60;
                 } else {
-                    init_power = 35;
+                    init_power = 40;
                 }
 
                 color_code = get_color(COLOR_CODE_BLACK);
@@ -225,7 +225,7 @@ void tracer_task(intptr_t unused) {
                 motor_move(50, 3);
 
                 /* 個体差により調整する */
-                set_motor_power(52, 50);
+                set_motor_power(50, 52);
 
                 /* 黒線を見つけるまで直進 */
                 while (1) {
@@ -509,12 +509,12 @@ void motor_rotate(int power, int degree) {
 
     if (degree > 0) {
         /* 右転回 */
-        left_power = (power + 5);
-        right_power = (power - 5) * -1;
+        left_power = (power);
+        right_power = (power) * -1;
     } else if (degree < 0) {
         /* 左転回 */
-        left_power = (power + 5) * -1;
-        right_power = (power - 5);
+        left_power = (power) * -1;
+        right_power = (power);
     } else {
         // 何もしない
         return;
@@ -548,8 +548,8 @@ void motor_move(int power, int cm) {
     /* @memo: このパラメータは実動作で確認して調整すること */
     degree = (180 * cm) / (DIAMETER * PI * 2);
 
-    motor_rotate_spec_count(t_pos == LEFT ? power : power + 5,
-                            t_pos == LEFT ? power + 5 : power,
+    motor_rotate_spec_count(power,
+                            power,
                             degree);
 
     return;
@@ -558,7 +558,7 @@ void motor_move(int power, int cm) {
 /* サークルを転回する */
 void deb_remove_turn(int turn) {
     int8_t color_code = COLOR_CODE_MAX;
-    int8_t deg_1st = 45;
+    int8_t deg_1st = 40;
     int8_t deg_2nd = 40;
 
     if (LEFT == turn) {
@@ -575,7 +575,7 @@ void deb_remove_turn(int turn) {
     /* 少し進む(誤検知防止) */
     motor_move(50, 3);
 
-    set_motor_power(55, 50);
+    set_motor_power(50, 50);
 
     /* 黒線を見つけるまで直進 */
     while (1) {
