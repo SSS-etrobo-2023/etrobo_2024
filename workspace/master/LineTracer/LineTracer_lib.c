@@ -64,7 +64,7 @@ void change_target_reflect(int color_code) {
 
 void change_refrect(int target) {
     if(target == 1) {
-        target_ref = (REF_BLACK_RGB/2) * 1.1;
+        target_ref = (REF_BLACK_RGB/2) * 1.2;
     } else if (target == 2){
         target_ref = (REF_BLACK_RGB/2) * 0.9;
     } else {

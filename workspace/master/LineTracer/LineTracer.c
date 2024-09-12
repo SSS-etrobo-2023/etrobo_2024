@@ -18,7 +18,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 65;
+static int init_power = 60;
 // ライン変更の際のインターバル
 static int black_c = 0;
 static int black_interval = 5;
@@ -31,7 +31,7 @@ static const int line_chang_iinterval = 100;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 #ifdef REF_BY_RGB
-static const float Kp = 2.0;
+static float Kp = 2.0;
 #else
 static const float Kp = 1.5;
 #endif
@@ -90,7 +90,6 @@ void tracer_task(intptr_t unused) {
     switch (phase) {
         case PHASE_START:
             LOG_D_TEST("phase_start.\n");
-            //change_refrect(2);
             change_target_reflect(COLOR_CODE_BLACK);
             motor_stop();
             phase = LINE_TRACE;
@@ -101,7 +100,9 @@ void tracer_task(intptr_t unused) {
             color_code = get_color(COLOR_CODE_BLUE);
             if (color_code == COLOR_CODE_BLUE) {
                 LOG_D_DEBUG("Blue Line found.\n");
+                change_refrect(2);
                 motor_stop();
+                Kp = 2.4;
                 isBlue = true;
                 init_power = 55;
                 phase = DOUBLE_LOOP;
@@ -140,7 +141,7 @@ void tracer_task(intptr_t unused) {
                 }
                 if (linetrace_find_blue() == 1 && blue_c >= 2) {
                     LOG_D_DEBUG("Blue Line found.\n");
-                    change_refrect(0);
+                    change_refrect(2);
                     isBlue = true;
                 }
             } 
@@ -148,6 +149,7 @@ void tracer_task(intptr_t unused) {
             if (blue_count > 3) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
+                Kp = 2.0;
                 init_power = 60;
                 change_target_reflect(COLOR_CODE_BLACK);
                 ext_tsk();
@@ -623,9 +625,9 @@ int linetrace_find_black() {
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
     
-    if (rgb.r < 100 &&
-        rgb.g < 100 &&
-        rgb.b < 100 &&
+    if (rgb.r < 90 &&
+        rgb.g < 90 &&
+        rgb.b < 90 &&
         rgb.b < rgb.r * 1.15) {
         return 1;
     }
