@@ -188,7 +188,11 @@ void tracer_task(intptr_t unused) {
                     init_power = 35;
                 }
 
-                color_code = get_color(COLOR_CODE_MAX);
+                if (!isStart) {
+                    color_code = get_color(COLOR_CODE_BLUE);
+                } else {
+                    color_code = get_color(COLOR_CODE_MAX);
+                }
                 if (color_code != COLOR_CODE_BLACK &&
                     color_code != COLOR_CODE_WHITE &&
                     color_code != COLOR_CODE_MAX) {
@@ -505,12 +509,12 @@ void motor_rotate(int power, int degree) {
 
     if (degree > 0) {
         /* 右転回 */
-        left_power = power;
-        right_power = power * -1;
+        left_power = (power + 5);
+        right_power = (power - 5) * -1;
     } else if (degree < 0) {
         /* 左転回 */
-        left_power = power * -1;
-        right_power = power;
+        left_power = (power + 5) * -1;
+        right_power = (power - 5);
     } else {
         // 何もしない
         return;
