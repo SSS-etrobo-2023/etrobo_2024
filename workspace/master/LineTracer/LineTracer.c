@@ -455,6 +455,16 @@ void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
                         abs(left_count - init_l_cnt), abs(right_count - init_r_cnt));
             break;
         }
+
+        /* ガード */
+        if ((abs(left_count - init_l_cnt) >= abs(count) * 1.5) ||
+            (abs(right_count - init_r_cnt) >= abs(count) * 1.5)) {
+            LOG_D_ERROR("<%s> guard!!\n", __func__);
+            LOG_D_DEBUG("END: left_motor: %d deg, right_motor: %d deg\n", left_count, right_count);
+            LOG_D_DEBUG("left_motor: %d deg, right_motor: %d deg\n",
+                        abs(left_count - init_l_cnt), abs(right_count - init_r_cnt));
+            break;
+        }
     }
 
     return;
