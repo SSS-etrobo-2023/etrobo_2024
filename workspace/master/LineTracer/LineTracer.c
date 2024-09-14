@@ -18,7 +18,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 65;
+static int init_power = 70;
 // ライン変更の際のインターバル
 static int black_c = 0;
 static int blue_c = 0;
@@ -26,11 +26,12 @@ static int blue_interval = 5;
 // ライントレースの偏り
 static bool is_line_change = false;
 static int line_change_count = 0;
-static const int line_chang_iinterval = 20;
+static const int line_chang_iinterval = 80;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 static const float standard_kp = 2.0;
-static const float double_loop_kp = 2.3;
+static const float double_loop_kp = 2.4;
+static const float line_change_kp = 1.2;
 #ifdef REF_BY_RGB
 static float Kp = 2.0;
 #else
@@ -113,12 +114,6 @@ void tracer_task(intptr_t unused) {
             }
             break;
         case DOUBLE_LOOP:
-            // isBlueで現在青の上にいるかどうかを判定する。
-            // 青を検知したらisBlueをtrueにし、次に黒を検出したらfalseにする
-            // 青→黒を検出した時右(左)追っかけから左(右)追っかけに変更する
-            // change_refrect関数により青の上にいる時はtarget_refを黒寄りに、
-            // 黒を検出した瞬間だけ白寄りにすることでスムーズなトレース方向変更を期待している
-            // 現状あまりうまくいっていないためこの部分は要改善
             if (isBlue) {
                 // 黒を2フレーム以上検知したら黒判定
                 if (linetrace_find_black() == 1) {
@@ -131,7 +126,7 @@ void tracer_task(intptr_t unused) {
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
                     blue_count++;
                     init_power = 55;
-                    if (blue_count == 2 || blue_count == 3) Kp = 0;
+                    if (blue_count == 2 || blue_count == 3) Kp = line_change_kp;
                     is_line_change = true;
                     change_refrect(1);
                     LOG_D_DEBUG("blue_count: %d\n", blue_count);
