@@ -14,11 +14,14 @@ extern void motor_rotate_spec_count(int left_power, int right_power, int32_t cou
 extern void motor_rotate(int power, int degree);
 extern void motor_move(int power, int cm);
 extern void deb_remove_turn(int turn);
-extern void deb_remove_straight();
+extern void deb_remove_straight(void);
+extern int linetrace_find_blue(void);
+extern int linetrace_find_black(void);
 
 /* LineTracer_lib.c の extern 宣言 */
 extern void change_target_ref_dev_remove(void);
 extern void change_target_reflect(int color_code);
+extern void change_refrect(int target);
 extern int change_trace_pos(int trace_pos);
 extern void set_motor_power(int left_power, int right_power);
 extern void set_motor_power_v2(int left_power, int right_power);

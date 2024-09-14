@@ -70,7 +70,7 @@ const int8_t deb_order[] = {
 const int8_t deb_order[] = {
     STRAIGHT,
     STRAIGHT,
-    TURN_LEFT,
+    COURSE_TYPE == RIGHT ? TURN_LEFT : TURN_RIGHT,
     STRAIGHT,
     STRAIGHT,
     END_DEB
@@ -195,9 +195,10 @@ void tracer_task(intptr_t unused) {
                 isOnLine = false;
             } else if (isOnLine) {
                 if (!isStart) {
-                    1+1;
+                    //do nothing
+                    ;
                 } else if (pwr_cnt++ < 10) {
-                    init_power = 65;
+                    init_power = 50;
                 } else {
                     init_power = 40;
                 }
@@ -251,7 +252,11 @@ void tracer_task(intptr_t unused) {
                     }
                 }
 
-                motor_rotate(60, 85);
+                if (COURSE_TYPE == RIGHT) {
+                    motor_rotate(60, 85);
+                } else {
+                    motor_rotate(60, -85);
+                }
                 isBlue = true;
                 init_power = 65;
                 Kp = 2.4;
@@ -329,8 +334,7 @@ static int16_t PID(uint16_t target_ref, uint16_t obtained_ref) {
     return res;
 }
 
-#ifdef REF_BY_RGB
-/* TODO: RGB値によるライントレース制御に変えてみる */
+/* RGB値によるライントレース制御 */
 int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
     int16_t turn = 0;
     int16_t curb = 0;
@@ -363,36 +367,6 @@ int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
     LOG_D_TEST("turn: %d\n", turn);
     return turn;
 }
-#else
-int16_t calculate_turn(uint16_t target_reflect, int trace_pos) {
-    int16_t turn = 0;
-    int16_t curb = 0;
-    uint16_t sensor_reflect = 0;
-
-    sensor_reflect = ev3_color_sensor_get_reflect(color_sensor);
-    LOG_D_TEST("reflect: %d\n", target_reflect - sensor_reflect);
-
-    curb = PID(target_reflect, sensor_reflect);
-
-    /* 曲がる量が大きくなりすぎないよう、制限する */
-    if (curb > CURB_MAX) {
-        curb = CURB_MAX;
-    } else if (curb < CURB_MIN) {
-        curb = CURB_MIN;
-    }
-
-    /* @memo: 左右で turn を逆にする
-              左トレースの場合、回転方向を逆にする */
-    if (trace_pos == LEFT) {
-        turn = -curb;
-    } else {
-        turn = curb;
-    }
-
-    LOG_D_TEST("turn: %d\n", turn);
-    return turn;
-}
-#endif
 
 /*
  * 2つのモータでステアリング動作を行う
@@ -454,11 +428,9 @@ void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
     int32_t init_r_cnt = 0;
     int32_t left_count = 0;
     int32_t right_count = 0;
-    //int8_t l_end = 0, r_end = 0;
 
     init_l_cnt = ev3_motor_get_counts(left_motor);
     init_r_cnt = ev3_motor_get_counts(right_motor);
-    //LOG_D_DEBUG("init_left_motor: %ld deg, init_right_motor: %ld deg\n", init_l_cnt, init_r_cnt);
     motor_stop();
 
     reset_motor_counts();
@@ -467,7 +439,7 @@ void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
         left_count = ev3_motor_get_counts(left_motor);
         right_count = ev3_motor_get_counts(right_motor);
         if (abs(left_count) < abs(init_l_cnt) && abs(right_count) < abs(init_r_cnt)) {
-            LOG_D_DEBUG("START: left_motor: %ld deg, right_motor: %ld deg\n", left_count, right_count);
+            LOG_D_DEBUG("START: left_motor: %d deg, right_motor: %d deg\n", left_count, right_count);
             init_l_cnt = left_count;
             init_r_cnt = right_count;
             break;
@@ -483,15 +455,12 @@ void motor_rotate_spec_count(int left_power, int right_power, int32_t count) {
         /* @memo: この判定は実動作で確認して調整すること */
         if (abs(left_count - init_l_cnt) >= abs(count) &&
             abs(right_count - init_r_cnt) >= abs(count)) {
-            LOG_D_DEBUG("END: left_motor: %ld deg, right_motor: %ld deg\n", left_count, right_count);
-            LOG_D_DEBUG("left_motor: %ld deg, right_motor: %ld deg\n",
+            LOG_D_DEBUG("END: left_motor: %d deg, right_motor: %d deg\n", left_count, right_count);
+            LOG_D_DEBUG("left_motor: %d deg, right_motor: %d deg\n",
                         abs(left_count - init_l_cnt), abs(right_count - init_r_cnt));
             break;
         }
     }
-
-    /* 回転終了後は停止状態にする */
-    //motor_stop();
 
     return;
 }
@@ -581,12 +550,8 @@ void deb_remove_turn(int turn) {
     if (LEFT == turn) {
         deg_1st *= -1;
         deg_2nd *= -1;
-    } else {
-        //deg_1st = 30;
-        //deg_2nd = 25;
     }
 
-    /* 45度回転 */
     motor_rotate(55, deg_1st);
 
     /* 少し進む(誤検知防止) */
@@ -603,7 +568,6 @@ void deb_remove_turn(int turn) {
         }
     }
 
-    /* さらに45度回転 */
     motor_rotate(55, deg_2nd);
 
     /* 左回転の後は左追っかけ、
@@ -627,7 +591,7 @@ void deb_remove_straight(void) {
     return;
 }
 
-int linetrace_find_blue() {
+int linetrace_find_blue(void) {
     rgb_raw_t rgb;
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
@@ -641,7 +605,7 @@ int linetrace_find_blue() {
     return 2;
 }
 
-int linetrace_find_black() {
+int linetrace_find_black(void) {
     rgb_raw_t rgb;
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);

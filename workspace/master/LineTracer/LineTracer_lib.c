@@ -13,7 +13,6 @@ extern uint16_t target_ref;
 #define REF_BLACK_RGB (LIGHT_WHITE_RGB + LIGHT_BLACK_RGB)
 #define REF_BLUE_RGB  (LIGHT_WHITE_RGB + LIGHT_BLUE_RGB)
 
-#ifdef REF_BY_RGB
 static uint16_t def_reflect[COLOR_CODE_MAX] = {
                   0, /* 赤 */
     REF_BLUE_RGB /3, /* 青 */
@@ -22,23 +21,12 @@ static uint16_t def_reflect[COLOR_CODE_MAX] = {
     REF_BLACK_RGB/4, /* 黒 */
                   0, /* 白 */
 };
-#else
-static uint16_t def_reflect[COLOR_CODE_MAX] = {
-              0, /* 赤 */
-    REF_BLUE /2, /* 青 */
-              0, /* 緑 */
-              0, /* 黄 */
-    REF_BLACK/3, /* 黒 */
-              0, /* 白 */
-};
-#endif
 
 void change_target_ref_dev_remove(void) {
     target_ref = REF_BLACK_RGB/3;
     return;
 }
 
-#ifdef REF_BY_RGB
 void change_target_reflect(int color_code) {
     if (def_reflect[color_code] == 0) {
         LOG_D_ERROR("Invalid color_code(%d).\n", color_code);
@@ -49,18 +37,6 @@ void change_target_reflect(int color_code) {
     target_ref = def_reflect[color_code];
     return;
 }
-#else
-void change_target_reflect(int color_code) {
-    if (def_reflect[color_code] == 0) {
-        LOG_D_ERROR("Invalid color_code(%d).\n", color_code);
-        target_ref = def_reflect[COLOR_CODE_BLACK];
-        return;
-    }
-
-    target_ref = def_reflect[color_code];
-    return;
-}
-#endif
 
 void change_refrect(int target) {
     if(target == 1) {
