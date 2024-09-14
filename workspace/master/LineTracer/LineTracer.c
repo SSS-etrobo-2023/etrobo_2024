@@ -184,7 +184,6 @@ void tracer_task(intptr_t unused) {
                         break;
                     case END_DEB:
                         phase = SMART_CARRY;
-                        LOG_D_DEBUG("end run.\n");
                         break;
                 }
 
@@ -197,7 +196,6 @@ void tracer_task(intptr_t unused) {
                 if (!isStart) {
                     1+1;
                 } else if (pwr_cnt++ < 10) {
-                    LOG_D_DEBUG("TEST(1) pwr_cnt: %d!!!\n", pwr_cnt);
                     init_power = 65;
                 } else {
                     init_power = 40;
@@ -223,12 +221,13 @@ void tracer_task(intptr_t unused) {
                 if (pwr_cnt++ < 30) {
                     init_power = 60;
                 } else {
-                    init_power = 40;
+                    init_power = 50;
                 }
 
                 color_code = get_color(COLOR_CODE_BLACK);
                 if (color_code == COLOR_CODE_BLACK) {
                     LOG_D_DEBUG("Black Line found.\n");
+                    init_power = 35;
                     isOnCircle = false;
                     isOnLine = true;
                     pwr_cnt = 0;
@@ -255,6 +254,8 @@ void tracer_task(intptr_t unused) {
                 motor_rotate(60, 85);
                 isBlue = true;
                 init_power = 65;
+                Kp = 2.2;
+                change_target_reflect(COLOR_CODE_BLACK);
             }
 
             color_code = get_color(COLOR_CODE_BLUE);
@@ -574,8 +575,8 @@ void motor_move(int power, int cm) {
 /* サークルを転回する */
 void deb_remove_turn(int turn) {
     int8_t color_code = COLOR_CODE_MAX;
-    int8_t deg_1st = 40;
-    int8_t deg_2nd = 40;
+    int8_t deg_1st = 35;
+    int8_t deg_2nd = 35;
 
     if (LEFT == turn) {
         deg_1st *= -1;
@@ -603,7 +604,7 @@ void deb_remove_turn(int turn) {
     }
 
     /* さらに45度回転 */
-    motor_rotate(50, deg_2nd);
+    motor_rotate(55, deg_2nd);
 
     /* 左回転の後は左追っかけ、
        右回転の後は右追っかけになるよう設定 */
