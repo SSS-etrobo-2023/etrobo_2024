@@ -166,7 +166,8 @@ void tracer_task(intptr_t unused) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
                 Kp = standard_kp;
-                change_refrect(1);
+                change_target_reflect(COLOR_CODE_BLACK);
+                //change_refrect(1);
                 ext_tsk();
             }
             break;
@@ -227,7 +228,6 @@ void tracer_task(intptr_t unused) {
                 color_code = get_color(COLOR_CODE_BLACK);
                 if (color_code == COLOR_CODE_BLACK) {
                     LOG_D_DEBUG("Black Line found.\n");
-                    init_power = 35;
                     isOnCircle = false;
                     isOnLine = true;
                     pwr_cnt = 0;
@@ -254,7 +254,7 @@ void tracer_task(intptr_t unused) {
                 motor_rotate(60, 85);
                 isBlue = true;
                 init_power = 65;
-                Kp = 2.2;
+                Kp = 2.4;
                 change_target_reflect(COLOR_CODE_BLACK);
             }
 
