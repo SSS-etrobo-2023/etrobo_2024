@@ -21,19 +21,20 @@ static int t_pos = COURSE_TYPE;
 static int init_power = 65;
 // ライン変更の際のインターバル
 static int black_c = 0;
-static int black_interval = 5;
 static int blue_c = 0;
 static int blue_interval = 5;
 // ライントレースの偏り
-static bool isLineChange = false;
+static bool is_line_change = false;
 static int line_change_count = 0;
-static const int line_chang_iinterval = 100;
+static const int line_chang_iinterval = 20;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
+static const float standard_kp = 2.0;
+static const float double_loop_kp = 2.3;
 #ifdef REF_BY_RGB
 static float Kp = 2.0;
 #else
-static const float Kp = 1.5;
+static float Kp = 1.5;
 #endif
 static const float Ki = 0.01;
 static const float Kd = 0.2;
@@ -91,6 +92,7 @@ void tracer_task(intptr_t unused) {
         case PHASE_START:
             LOG_D_TEST("phase_start.\n");
             change_target_reflect(COLOR_CODE_BLACK);
+            ev3_motor_stop(arm_motor, true);
             motor_stop();
             phase = LINE_TRACE;
 
@@ -100,11 +102,10 @@ void tracer_task(intptr_t unused) {
             color_code = get_color(COLOR_CODE_BLUE);
             if (color_code == COLOR_CODE_BLUE) {
                 LOG_D_DEBUG("Blue Line found.\n");
-                change_refrect(2);
                 motor_stop();
-                Kp = 2.4;
+                Kp = double_loop_kp;
                 isBlue = true;
-                init_power = 55;
+                init_power = 45;
                 phase = DOUBLE_LOOP;
                 //change_target_reflect(COLOR_CODE_BLUE);
 
@@ -124,12 +125,14 @@ void tracer_task(intptr_t unused) {
                     black_c++;
                     blue_c = 0;
                 }
-                if (linetrace_find_black() == 1 && black_c >= 3) {
+                if (linetrace_find_black() == 1 && black_c >= 2) {
                     LOG_D_DEBUG("Black Line found.\n");
                     isBlue = false;
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
                     blue_count++;
-                    isLineChange = true;
+                    init_power = 55;
+                    if (blue_count == 2 || blue_count == 3) Kp = 0;
+                    is_line_change = true;
                     change_refrect(1);
                     LOG_D_DEBUG("blue_count: %d\n", blue_count);
                 }
@@ -142,14 +145,27 @@ void tracer_task(intptr_t unused) {
                 if (linetrace_find_blue() == 1 && blue_c >= 2) {
                     LOG_D_DEBUG("Blue Line found.\n");
                     change_refrect(2);
+                    init_power = 45;
                     isBlue = true;
                 }
             } 
+            if (blue_count == 2 || blue_count == 3)
+            {
+                if (is_line_change) {
+                    line_change_count++;
+                }
+                if (is_line_change && line_change_count >= line_chang_iinterval)
+                {
+                    is_line_change = false;
+                    line_change_count = 0;
+                    Kp = double_loop_kp;
+                }
+            }
             // ダブルループ終了
             if (blue_count > 3) {
                 motor_stop();
                 phase = DEBRI_REMOVE;
-                Kp = 2.0;
+                Kp = standard_kp;
                 change_refrect(1);
                 ext_tsk();
             }
@@ -629,9 +645,9 @@ int linetrace_find_black() {
 
     ev3_color_sensor_get_rgb_raw(color_sensor, &rgb);
     
-    if (rgb.r < 90 &&
-        rgb.g < 90 &&
-        rgb.b < 90 &&
+    if (rgb.r < 95 &&
+        rgb.g < 95 &&
+        rgb.b < 95 &&
         rgb.b < rgb.r * 1.15) {
         return 1;
     }
