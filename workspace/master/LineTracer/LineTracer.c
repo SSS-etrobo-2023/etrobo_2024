@@ -18,7 +18,7 @@ static int t_pos = COURSE_TYPE;
 
 // 制御定数
 // @memo この値は適宜調整する
-static int init_power = 70;
+static int init_power = 65;
 // ライン変更の際のインターバル
 static int black_c = 0;
 static int blue_c = 0;
@@ -26,7 +26,7 @@ static int blue_interval = 5;
 // ライントレースの偏り
 static bool is_line_change = false;
 static int line_change_count = 0;
-static const int line_chang_iinterval = 80;
+static const int line_chang_iinterval = 50;
 //static const float T = LINE_TRACER_PERIOD / (1000 * 1000);
 static const float T = 0.01;
 static const float standard_kp = 2.0;
@@ -49,6 +49,8 @@ static uint32_t pwr_cnt = 100;
 static int8_t isStart = 0;
 static int8_t isOnCircle = false;
 static int8_t isOnLine = false;
+
+static uint32_t trace_time = 0;
 
 char color_str[COLOR_CODE_MAX + 1][10] = {
     "RED", "BLUE", "GREEN", "YELLOW", "BLACK", "WHITE", "UNKNOWN"
@@ -102,6 +104,10 @@ void tracer_task(intptr_t unused) {
             ext_tsk();
             break;
         case LINE_TRACE:
+            if (trace_time++ < 1000) {
+                break;
+            }
+
             color_code = get_color(COLOR_CODE_BLUE);
             if (color_code == COLOR_CODE_BLUE) {
                 LOG_D_DEBUG("Blue Line found.\n");
@@ -127,7 +133,7 @@ void tracer_task(intptr_t unused) {
                     isBlue = false;
                     t_pos = t_pos == RIGHT ? LEFT : RIGHT;
                     blue_count++;
-                    init_power = 55;
+                    init_power = 50;
                     if (blue_count == 2 || blue_count == 3) Kp = line_change_kp;
                     is_line_change = true;
                     change_refrect(1);
@@ -142,7 +148,7 @@ void tracer_task(intptr_t unused) {
                 if (linetrace_find_blue() == 1 && blue_c >= 2) {
                     LOG_D_DEBUG("Blue Line found.\n");
                     change_refrect(2);
-                    init_power = 45;
+                    init_power = 40;
                     isBlue = true;
                 }
             } 
@@ -196,7 +202,7 @@ void tracer_task(intptr_t unused) {
                 } else if (pwr_cnt++ < 10) {
                     init_power = 50;
                 } else {
-                    init_power = 40;
+                    init_power = 50;
                 }
 
                 if (!isStart) {
