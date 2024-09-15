@@ -91,11 +91,13 @@ void tracer_task(intptr_t unused) {
 
     switch (phase) {
         case PHASE_START:
-            LOG_D_TEST("phase_start.\n");
-            change_target_reflect(COLOR_CODE_BLACK);
-            ev3_motor_stop(arm_motor, true);
-            motor_stop();
-            phase = LINE_TRACE;
+            if (ev3_touch_sensor_is_pressed(touch_sensor)) {
+                LOG_D_DEBUG("start run.\n");
+                change_target_reflect(COLOR_CODE_BLACK);
+                ev3_motor_stop(arm_motor, true);
+                motor_stop();
+                phase = LINE_TRACE;
+            }
 
             ext_tsk();
             break;
@@ -190,8 +192,7 @@ void tracer_task(intptr_t unused) {
                 isOnLine = false;
             } else if (isOnLine) {
                 if (!isStart) {
-                    //do nothing
-                    ;
+                    init_power = 45;
                 } else if (pwr_cnt++ < 10) {
                     init_power = 50;
                 } else {
@@ -236,7 +237,7 @@ void tracer_task(intptr_t unused) {
                 motor_move(50, 3);
 
                 /* 個体差により調整する */
-                set_motor_power(50, 52);
+                set_motor_power(50, 50);
 
                 /* 黒線を見つけるまで直進 */
                 while (1) {
@@ -550,7 +551,7 @@ void motor_move(int power, int cm) {
 void deb_remove_turn(int turn) {
     int8_t color_code = COLOR_CODE_MAX;
     int8_t deg_1st = 35;
-    int8_t deg_2nd = 35;
+    int8_t deg_2nd = 45;
 
     if (LEFT == turn) {
         deg_1st *= -1;
